@@ -1,18 +1,27 @@
+interface SteamUser {
+    id: number
+    steam_id: string
+    name: string
+    avatar: string | null
+}
+
 export const useAuth = () => {
+    const { user, isAuthenticated, logout, refreshIdentity } = useSanctumAuth<SteamUser>()
+    const { baseUrl } = useSanctumConfig()
 
-    const sanctumFetch = useSanctumClient();
+    /**
+     * Send the browser to the backend Steam redirect route. This is a full-page
+     * navigation (not an XHR) because Steam's OpenID flow redirects away and back.
+     */
+    function loginWithSteam() {
+        window.location.href = `${baseUrl}/auth/steam/redirect`
+    }
 
-    // async function register(email: string, password: string) {
-        
-    //     return await sanctumFetch('/api/register', {
-    //         method: 'POST',
-    //         body: {
-    //             email,
-    //             password,
-    //         },
-    //     })
-
-    // }
-
-
+    return {
+        user,
+        isAuthenticated,
+        loginWithSteam,
+        logout,
+        refreshIdentity,
+    }
 }
