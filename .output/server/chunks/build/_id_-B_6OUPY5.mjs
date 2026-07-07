@@ -1,11 +1,12 @@
 import { _ as _sfc_main$1 } from './index-ZcX2QkUC.mjs';
 import { u as useTrade, _ as __nuxt_component_1, t as tradeEventLabel } from './useTrade-BZQUdb7u.mjs';
-import { defineComponent, computed, watch, mergeProps, unref, withCtx, createVNode, createTextVNode, useSSRContext } from 'vue';
+import { defineComponent, computed, ref, watch, mergeProps, unref, withCtx, createVNode, createTextVNode, useSSRContext } from 'vue';
 import { ssrRenderAttrs, ssrRenderComponent, ssrInterpolate, ssrRenderAttr, ssrRenderList } from 'vue/server-renderer';
-import { RiSteamFill, RiErrorWarningLine, RiShieldCheckLine, RiArrowRightLine } from '@remixicon/vue';
+import { RiSteamFill, RiErrorWarningLine, RiLoopRightLine, RiShieldCheckLine, RiArrowRightLine } from '@remixicon/vue';
 import { f as formatMoney } from './format-BBBd5tQz.mjs';
 import { c as useRoute } from './server.mjs';
 import { u as useAuth } from './auth-Dmkix5Lz.mjs';
+import { s as setInterval } from './interval-B0wcd8HX.mjs';
 import 'class-variance-authority';
 import 'reka-ui';
 import 'clsx';
@@ -31,10 +32,6 @@ import '@vue/shared';
 import 'consola';
 import './useSanctumAuth-CV-U5xaj.mjs';
 
-const intervalError = "[nuxt] `setInterval` should not be used on the server. Consider wrapping it with an `onNuxtReady`, `onBeforeMount` or `onMounted` lifecycle hook, or ensure you only call it in the browser by checking `false`.";
-const setInterval = (() => {
-  console.error(intervalError);
-});
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "[id]",
   __ssrInlineRender: true,
@@ -44,6 +41,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     const { trade, status, isLoading, errorMessage, load } = useTrade(() => route.params.id);
     const isSeller = computed(() => !!user.value && trade.value?.seller?.id === user.value.id);
     let timer;
+    const now = ref(Date.now());
     function startPolling() {
       stopPolling();
       timer = setInterval();
@@ -54,22 +52,47 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         timer = void 0;
       }
     }
+    const refreshing = ref(false);
+    async function refresh() {
+      refreshing.value = true;
+      try {
+        await load();
+      } finally {
+        refreshing.value = false;
+      }
+    }
     watch(isAuthenticated, (authenticated) => {
       if (authenticated) {
         load().then(startPolling);
       }
     });
-    const protectionLabel = computed(() => {
+    const protectionRemainingMs = computed(() => {
       if (!trade.value?.protection_expires_at) {
         return null;
       }
-      const remainingMs = new Date(trade.value.protection_expires_at).getTime() - Date.now();
-      if (remainingMs <= 0) {
-        return "Protection window ended";
+      return new Date(trade.value.protection_expires_at).getTime() - now.value;
+    });
+    const protectionCountdown = computed(() => {
+      const ms = protectionRemainingMs.value;
+      if (ms === null) {
+        return null;
       }
-      const days = Math.floor(remainingMs / 864e5);
-      const hours = Math.floor(remainingMs % 864e5 / 36e5);
-      return `Protected for ${days >= 1 ? `${days}d ${hours}h` : `${hours}h`}`;
+      if (ms <= 0) {
+        return "releasing…";
+      }
+      const total = Math.floor(ms / 1e3);
+      const days = Math.floor(total / 86400);
+      const hours = Math.floor(total % 86400 / 3600);
+      const mins = Math.floor(total % 3600 / 60);
+      const secs = total % 60;
+      const pad = (n) => String(n).padStart(2, "0");
+      if (days >= 1) {
+        return `${days}d ${pad(hours)}h ${pad(mins)}m`;
+      }
+      if (hours >= 1) {
+        return `${hours}:${pad(mins)}:${pad(secs)}`;
+      }
+      return `${pad(mins)}:${pad(secs)}`;
     });
     return (_ctx, _push, _parent, _attrs) => {
       const _component_Button = _sfc_main$1;
@@ -123,21 +146,43 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           }, _parent));
           _push(`</div>`);
         } else if (unref(trade)) {
-          _push(`<div class="space-y-4"><header class="flex items-center justify-between gap-3"><div><h1 class="text-lg font-semibold">Trade #${ssrInterpolate(unref(trade).id)}</h1><p class="text-xs text-muted-foreground">${ssrInterpolate(unref(trade).buyer?.name)} buying from ${ssrInterpolate(unref(trade).seller?.name)}</p></div>`);
+          _push(`<div class="space-y-4"><header class="flex items-center justify-between gap-3"><div><h1 class="text-lg font-semibold">Trade #${ssrInterpolate(unref(trade).id)}</h1><p class="text-xs text-muted-foreground">${ssrInterpolate(unref(trade).buyer?.name)} buying from ${ssrInterpolate(unref(trade).seller?.name)}</p></div><div class="flex items-center gap-2">`);
           _push(ssrRenderComponent(_component_TradeStatusBadge, {
             status: unref(trade).status
           }, null, _parent));
-          _push(`</header><div class="flex items-center gap-4 rounded-lg border border-border bg-card p-4"><div class="flex size-20 shrink-0 items-center justify-center rounded-md bg-[radial-gradient(circle_at_center,theme(colors.muted)_0%,transparent_70%)] p-2">`);
+          _push(ssrRenderComponent(_component_Button, {
+            variant: "outline",
+            size: "icon-sm",
+            disabled: unref(refreshing),
+            title: "Refresh now",
+            onClick: ($event) => refresh()
+          }, {
+            default: withCtx((_, _push2, _parent2, _scopeId) => {
+              if (_push2) {
+                _push2(ssrRenderComponent(unref(RiLoopRightLine), {
+                  class: { "animate-spin": unref(refreshing) }
+                }, null, _parent2, _scopeId));
+              } else {
+                return [
+                  createVNode(unref(RiLoopRightLine), {
+                    class: { "animate-spin": unref(refreshing) }
+                  }, null, 8, ["class"])
+                ];
+              }
+            }),
+            _: 1
+          }, _parent));
+          _push(`</div></header><div class="flex items-center gap-4 rounded-lg border border-border bg-card p-4"><div class="flex size-20 shrink-0 items-center justify-center rounded-md bg-[radial-gradient(circle_at_center,theme(colors.muted)_0%,transparent_70%)] p-2">`);
           if (unref(trade).item.icon_url) {
             _push(`<img${ssrRenderAttr("src", unref(trade).item.icon_url)}${ssrRenderAttr("alt", unref(trade).item.name ?? "Item")} class="max-h-full max-w-full object-contain">`);
           } else {
             _push(`<span class="text-xs text-muted-foreground">No image</span>`);
           }
           _push(`</div><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${ssrInterpolate(unref(trade).item.name)}</p><p class="truncate text-xs text-muted-foreground">${ssrInterpolate(unref(trade).market_hash_name)}</p></div><span class="shrink-0 font-mono text-base font-semibold tabular-nums">${ssrInterpolate(unref(formatMoney)(unref(trade).price, unref(trade).currency))}</span></div>`);
-          if (unref(trade).status === "accepted" && unref(protectionLabel)) {
-            _push(`<div class="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">`);
+          if (unref(trade).status === "accepted") {
+            _push(`<div class="flex items-center justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300"><div class="flex items-center gap-2">`);
             _push(ssrRenderComponent(unref(RiShieldCheckLine), { class: "size-4 shrink-0" }, null, _parent));
-            _push(`<span>${ssrInterpolate(unref(protectionLabel))} — the seller is paid once it passes with no reversal.</span></div>`);
+            _push(`<span>Protected — the seller is paid once this passes with no reversal.</span></div><span class="shrink-0 font-mono text-base font-semibold tabular-nums">${ssrInterpolate(unref(protectionCountdown))}</span></div>`);
           } else {
             _push(`<!---->`);
           }
@@ -187,4 +232,4 @@ _sfc_main.setup = (props, ctx) => {
 };
 
 export { _sfc_main as default };
-//# sourceMappingURL=_id_-QkMEF98M.mjs.map
+//# sourceMappingURL=_id_-B_6OUPY5.mjs.map

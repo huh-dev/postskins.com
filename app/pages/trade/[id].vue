@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RiArrowRightLine, RiErrorWarningLine, RiShieldCheckLine, RiSteamFill } from "@remixicon/vue"
+import { RiArrowRightLine, RiErrorWarningLine, RiLoopRightLine, RiShieldCheckLine, RiSteamFill } from "@remixicon/vue"
 import { formatMoney } from "@/lib/format"
 
 const route = useRoute()
@@ -9,6 +9,10 @@ const { trade, status, isLoading, isActive, errorMessage, load } = useTrade(() =
 const isSeller = computed(() => !!user.value && trade.value?.seller?.id === user.value.id)
 
 let timer: ReturnType<typeof setInterval> | undefined
+let clock: ReturnType<typeof setInterval> | undefined
+
+// Ticks every second so the countdown stays live between the 2s data polls.
+const now = ref(Date.now())
 
 function startPolling(): void {
   stopPolling()
@@ -26,7 +30,20 @@ function stopPolling(): void {
   }
 }
 
+const refreshing = ref(false)
+
+async function refresh(): Promise<void> {
+  refreshing.value = true
+  try {
+    await load()
+  }
+  finally {
+    refreshing.value = false
+  }
+}
+
 onMounted(() => {
+  clock = setInterval(() => (now.value = Date.now()), 1000)
   if (isAuthenticated.value) {
     load().then(startPolling)
   }
@@ -38,23 +55,45 @@ watch(isAuthenticated, (authenticated) => {
   }
 })
 
-onUnmounted(stopPolling)
+onUnmounted(() => {
+  stopPolling()
+  if (clock) {
+    clearInterval(clock)
+  }
+})
 
-const protectionLabel = computed(() => {
+/** Live remaining time in the protection window, or null if not applicable. */
+const protectionRemainingMs = computed(() => {
   if (!trade.value?.protection_expires_at) {
     return null
   }
+  return new Date(trade.value.protection_expires_at).getTime() - now.value
+})
 
-  const remainingMs = new Date(trade.value.protection_expires_at).getTime() - Date.now()
-
-  if (remainingMs <= 0) {
-    return "Protection window ended"
+/** Formatted ticking countdown, e.g. "6d 23h 04m" or "00:59". */
+const protectionCountdown = computed(() => {
+  const ms = protectionRemainingMs.value
+  if (ms === null) {
+    return null
+  }
+  if (ms <= 0) {
+    return "releasing…"
   }
 
-  const days = Math.floor(remainingMs / 86_400_000)
-  const hours = Math.floor((remainingMs % 86_400_000) / 3_600_000)
+  const total = Math.floor(ms / 1000)
+  const days = Math.floor(total / 86_400)
+  const hours = Math.floor((total % 86_400) / 3_600)
+  const mins = Math.floor((total % 3_600) / 60)
+  const secs = total % 60
+  const pad = (n: number): string => String(n).padStart(2, "0")
 
-  return `Protected for ${days >= 1 ? `${days}d ${hours}h` : `${hours}h`}`
+  if (days >= 1) {
+    return `${days}d ${pad(hours)}h ${pad(mins)}m`
+  }
+  if (hours >= 1) {
+    return `${hours}:${pad(mins)}:${pad(secs)}`
+  }
+  return `${pad(mins)}:${pad(secs)}`
 })
 </script>
 
@@ -95,7 +134,12 @@ const protectionLabel = computed(() => {
               {{ trade.buyer?.name }} buying from {{ trade.seller?.name }}
             </p>
           </div>
-          <TradeStatusBadge :status="trade.status" />
+          <div class="flex items-center gap-2">
+            <TradeStatusBadge :status="trade.status" />
+            <Button variant="outline" size="icon-sm" :disabled="refreshing" title="Refresh now" @click="refresh()">
+              <RiLoopRightLine :class="{ 'animate-spin': refreshing }" />
+            </Button>
+          </div>
         </header>
 
         <!-- Item -->
@@ -113,10 +157,13 @@ const protectionLabel = computed(() => {
           </span>
         </div>
 
-        <!-- Protection window -->
-        <div v-if="trade.status === 'accepted' && protectionLabel" class="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
-          <RiShieldCheckLine class="size-4 shrink-0" />
-          <span>{{ protectionLabel }} — the seller is paid once it passes with no reversal.</span>
+        <!-- Protection window (live countdown) -->
+        <div v-if="trade.status === 'accepted'" class="flex items-center justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+          <div class="flex items-center gap-2">
+            <RiShieldCheckLine class="size-4 shrink-0" />
+            <span>Protected — the seller is paid once this passes with no reversal.</span>
+          </div>
+          <span class="shrink-0 font-mono text-base font-semibold tabular-nums">{{ protectionCountdown }}</span>
         </div>
 
         <!-- Delivery: the seller sends the item; the buyer only waits. -->

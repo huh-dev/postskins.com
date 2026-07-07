@@ -1,13 +1,40 @@
 <script setup lang="ts">
-import { RiLock2Line, RiLoopRightLine, RiSteamFill } from "@remixicon/vue"
+import { RiCheckLine, RiLock2Line, RiLoopRightLine, RiSteamFill } from "@remixicon/vue"
 import { formatMoney } from "@/lib/format"
 
 const { isAuthenticated, loginWithSteam } = useAuth()
 const { items, status, isLoading, load } = useInventory()
 const { mine, errorMessage, busy, loadMine, createListing, cancelListing } = useMarket()
+const seller = useSeller()
 
 // Draft price (major units) per inventory item id.
 const priceDrafts = reactive<Record<number, number>>({})
+
+let connectPoll: ReturnType<typeof setInterval> | undefined
+
+async function connectSteam(): Promise<void> {
+  const id = await seller.startConnect()
+  if (!id) {
+    return
+  }
+  connectPoll = setInterval(async () => {
+    const status = await seller.checkConnect(id)
+    if (status !== "pending") {
+      clearInterval(connectPoll)
+    }
+  }, 2000)
+}
+
+async function reconnectSteam(): Promise<void> {
+  await seller.disconnect()
+  await connectSteam()
+}
+
+onUnmounted(() => {
+  if (connectPoll) {
+    clearInterval(connectPoll)
+  }
+})
 
 const tradableItems = computed(() => items.value.filter(item => item.tradable))
 const listedAssetIds = computed(() => new Set(mine.value.filter(l => l.status === "active").map(l => l.market_hash_name)))
@@ -29,12 +56,14 @@ async function list(itemId: number): Promise<void> {
 onMounted(() => {
   if (isAuthenticated.value) {
     refresh()
+    seller.loadStatus()
   }
 })
 
 watch(isAuthenticated, (authed) => {
   if (authed) {
     refresh()
+    seller.loadStatus()
   }
 })
 </script>
@@ -54,6 +83,30 @@ watch(isAuthenticated, (authed) => {
         <h1 class="text-lg font-semibold">Sell</h1>
       </header>
 
+      <!-- Connect Steam for selling -->
+      <section v-if="!seller.connected.value" class="mb-6 rounded-lg border border-amber-300 bg-card p-4 dark:border-amber-500/30">
+        <h2 class="text-sm font-semibold">Connect your Steam account to sell</h2>
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          This authorizes Postskins to send the trade offer for you when an item sells — you'll just confirm it on your Steam mobile app. We never see your password.
+        </p>
+
+        <div v-if="seller.qrImageSrc.value" class="mt-3 flex flex-col items-center gap-2">
+          <img :src="seller.qrImageSrc.value" alt="Steam login QR code" width="200" height="200" class="rounded-md bg-white p-2">
+          <p class="text-xs text-muted-foreground">Scan with the Steam mobile app, then tap <strong>Approve</strong>. Waiting…</p>
+        </div>
+        <Button v-else size="sm" class="mt-3" :disabled="seller.connecting.value" @click="connectSteam()">
+          <RiSteamFill /> Connect Steam
+        </Button>
+
+        <p v-if="seller.errorMessage.value" class="mt-2 text-xs text-destructive">{{ seller.errorMessage.value }}</p>
+      </section>
+      <div v-else class="mb-4 flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
+          <RiCheckLine class="size-3.5" /> Steam connected for selling
+        </span>
+        <Button variant="ghost" size="xs" :disabled="seller.connecting.value" @click="reconnectSteam()">Reconnect</Button>
+      </div>
+
       <p v-if="errorMessage" class="mb-4 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
         {{ errorMessage }}
       </p>
@@ -72,7 +125,8 @@ watch(isAuthenticated, (authed) => {
         </ul>
       </section>
 
-      <!-- List an item -->
+      <!-- List an item (only once connected for selling) -->
+      <template v-if="seller.connected.value">
       <h2 class="mb-2 text-sm font-semibold">List an item</h2>
       <div v-if="isLoading && items.length === 0" class="flex min-h-[30svh] items-center justify-center">
         <RiLoopRightLine class="size-6 animate-spin text-muted-foreground" />
@@ -108,6 +162,7 @@ watch(isAuthenticated, (authed) => {
           </div>
         </div>
       </div>
+      </template>
     </template>
   </div>
 </template>

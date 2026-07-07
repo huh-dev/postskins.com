@@ -679,7 +679,7 @@ const _routes = [
   {
     name: "trade-id",
     path: "/trade/:id()",
-    component: () => import('./_id_-QkMEF98M.mjs')
+    component: () => import('./_id_-B_6OUPY5.mjs')
   },
   {
     name: "inventory",
@@ -694,7 +694,7 @@ const _routes = [
   {
     name: "sell",
     path: "/sell",
-    component: () => import('./sell-ChtcOQe4.mjs')
+    component: () => import('./sell-Oi1jH_50.mjs')
   },
   {
     name: "trade-lab",
