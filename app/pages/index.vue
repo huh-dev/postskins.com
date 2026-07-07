@@ -23,7 +23,12 @@ const { user, isAuthenticated, loginWithSteam, logout } = useAuth()
       >
       <p class="text-sm">Signed in as <strong>{{ user.name }}</strong></p>
       <p class="text-xs text-muted-foreground">Steam ID: {{ user.steam_id }}</p>
-      <Button variant="destructive" @click="logout()">Sign out</Button>
+      <div class="flex gap-2">
+        <Button as-child>
+          <NuxtLink to="/inventory">View inventory</NuxtLink>
+        </Button>
+        <Button variant="destructive" @click="logout()">Sign out</Button>
+      </div>
     </template>
 
     <template v-else>
