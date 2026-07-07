@@ -1,4 +1,5 @@
 export interface InventoryItem {
+    id: number
     asset_id: string
     class_id: string
     instance_id: string

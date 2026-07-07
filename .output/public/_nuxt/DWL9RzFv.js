@@ -1,0 +1,1 @@
+import{u}from"./C1NLozwz.js";import{B as i}from"./D9nCMUze.js";function s(){const a=u(),t=i(null);async function e(){try{t.value=await a("/api/wallet")}catch{t.value=null}}async function n(l=1e5){await a("/api/dev/credit",{method:"POST",body:{amount:l}}),await e()}return{wallet:t,load:e,addTestFunds:n}}export{s as u};
