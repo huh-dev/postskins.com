@@ -83,6 +83,10 @@ const sectionSurfaceStyle = computed(() => {
     "--section-shadow-blur": `${elevation * 18}px`,
     "--section-shadow-y": `${elevation * 4}px`,
     "--section-bg-alpha": String(0.9 + elevation * 0.08),
+    "--shine-border-alpha": String(elevation * 0.62),
+    "--shine-shadow-alpha": String(elevation * 0.24),
+    "--shine-shadow-blur": `${elevation * 18}px`,
+    "--shine-shadow-y": `${elevation * 4}px`,
   }
 })
 
@@ -259,7 +263,7 @@ useResizeObserver(navRef, () => updateIndicator())
     <button
       v-else
       type="button"
-      class="sign-in-btn group col-start-3 flex h-10 items-center justify-self-end gap-1.5 rounded-lg px-3.5 text-xs font-medium text-foreground"
+      class="shine-btn shine-btn--sidebar group col-start-3 flex h-10 items-center justify-self-end gap-1.5 rounded-lg px-3.5 text-xs font-medium text-foreground"
       :style="sectionSurfaceStyle"
       @click="loginWithSteam()"
     >
@@ -300,78 +304,5 @@ useResizeObserver(navRef, () => updateIndicator())
   -webkit-backdrop-filter: blur(var(--section-blur));
   backdrop-filter: blur(var(--section-blur));
   box-shadow: 0 var(--section-shadow-y) var(--section-shadow-blur) oklch(0 0 0 / var(--section-shadow-alpha));
-}
-
-.sign-in-btn {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: linear-gradient(
-    145deg,
-    color-mix(in oklch, var(--sidebar) 88%, white 12%) 0%,
-    var(--sidebar) 45%,
-    color-mix(in oklch, var(--sidebar) 92%, black 8%) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.07),
-    inset 0 -1px 0 oklch(0 0 0 / 0.18),
-    0 var(--section-shadow-y, 0px) var(--section-shadow-blur, 0px) oklch(0 0 0 / var(--section-shadow-alpha, 0));
-  -webkit-backdrop-filter: blur(var(--section-blur, 4px));
-  backdrop-filter: blur(var(--section-blur, 4px));
-  border: 1px solid color-mix(
-    in oklch,
-    var(--border) calc(var(--section-border-alpha, 0) * 100%),
-    transparent
-  );
-  transition:
-    box-shadow 0.35s ease,
-    transform 0.15s ease;
-}
-
-.sign-in-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 28%,
-    oklch(1 0 0 / 0.03) 40%,
-    oklch(1 0 0 / 0.09) 50%,
-    oklch(1 0 0 / 0.03) 60%,
-    transparent 72%
-  );
-  pointer-events: none;
-}
-
-.sign-in-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 38%,
-    oklch(1 0 0 / 0.05) 44%,
-    oklch(1 0 0 / 0.22) 50%,
-    oklch(1 0 0 / 0.05) 56%,
-    transparent 62%
-  );
-  transform: translateX(-120%);
-  transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
-  pointer-events: none;
-}
-
-.sign-in-btn:hover {
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.12),
-    inset 0 -1px 0 oklch(0 0 0 / 0.12),
-    0 0 24px oklch(0.58 0.15 256.6 / 0.1);
-}
-
-.sign-in-btn:hover::after {
-  transform: translateX(120%);
-}
-
-.sign-in-btn:active {
-  transform: scale(0.98);
 }
 </style>
