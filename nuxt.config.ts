@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  modules: ['shadcn-nuxt', 'nuxt-auth-sanctum'],
+  modules: ['@nuxt/icon', 'shadcn-nuxt', 'nuxt-auth-sanctum'],
   sanctum: {
     // Laravel API base URL. Override with NUXT_PUBLIC_SANCTUM_BASE_URL in .env.
     baseUrl: 'http://localhost:8000',
