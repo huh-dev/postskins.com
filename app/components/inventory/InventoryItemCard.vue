@@ -40,13 +40,13 @@ const wearMarkerStyle = computed(() => ({
 
 <template>
   <article
-    class="surface-panel relative flex flex-col rounded-lg"
+    class="surface-panel relative flex flex-col rounded-lg border-0"
     :class="{ 'opacity-75': !isTradable }"
   >
     <header class="relative px-3 pt-2.5 pb-1">
       <span
         v-if="stack.count > 1"
-        class="absolute top-2 right-2 rounded-md border border-border/60 bg-sidebar-accent/90 px-1.5 py-0.5 text-[0.625rem] font-semibold tabular-nums text-foreground"
+        class="absolute top-2 right-2 rounded-md bg-sidebar-accent/90 px-1.5 py-0.5 text-[0.625rem] font-semibold tabular-nums text-foreground"
       >
         ×{{ stack.count }}
       </span>
@@ -112,7 +112,7 @@ const wearMarkerStyle = computed(() => ({
     <div class="mt-auto px-3 pt-2 pb-2.5">
       <button
         type="button"
-        class="shine-btn shine-btn--sidebar flex h-7 w-full items-center justify-center gap-1.5 rounded-md text-[0.6875rem] font-medium"
+        class="shine-btn shine-btn--primary flex h-7 w-full items-center justify-center gap-1.5 rounded-md text-[0.6875rem] font-medium"
         :disabled="!isTradable"
       >
         <Icon name="solar:tag-price-bold" class="relative z-10 size-3.5" />

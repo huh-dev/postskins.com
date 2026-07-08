@@ -30,6 +30,7 @@ interface InventoryResponse {
     context_id: number
     count: number
     stale: boolean
+    error: string | null
     items: InventoryItem[]
 }
 
@@ -48,6 +49,7 @@ export function useInventory() {
     const items = ref<InventoryItem[]>([])
     const status = ref<InventoryStatus>('idle')
     const stale = ref(false)
+    const staleError = ref<string | null>(null)
     const errorMessage = ref<string | null>(null)
 
     const isLoading = computed(() => status.value === 'loading')
@@ -71,6 +73,7 @@ export function useInventory() {
 
             items.value = data.items
             stale.value = data.stale
+            staleError.value = data.error
             status.value = 'success'
         }
         catch (error: unknown) {
@@ -86,7 +89,7 @@ export function useInventory() {
         }
     }
 
-    return { items, groupedItems, totalCount, status, stale, isLoading, errorMessage, load }
+    return { items, groupedItems, totalCount, status, stale, staleError, isLoading, errorMessage, load }
 }
 
 /**

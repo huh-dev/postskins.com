@@ -14,6 +14,9 @@ const actions = [
 <template>
   <div class="mx-auto w-full max-w-4xl px-4 py-10 sm:py-16">
     <section class="text-center">
+      <div class="mb-5 flex justify-center">
+        <BrandPostskinsLogo size="lg" />
+      </div>
       <h1 class="text-2xl font-semibold sm:text-3xl">Trade CS2 skins, protected end-to-end</h1>
       <p class="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
         Peer-to-peer trades with balance held until Steam's 7-day trade-protection window passes — reversals are caught and refunded automatically.
