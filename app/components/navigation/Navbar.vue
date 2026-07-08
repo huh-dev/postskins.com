@@ -145,7 +145,7 @@ useResizeObserver(navRef, () => updateIndicator())
 
 <template>
   <header
-    class="navbar-header fixed inset-x-0 top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 py-2 sm:gap-3 sm:px-3"
+    class="navbar-header fixed inset-x-0 top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4"
     :style="headerSurfaceStyle"
   >
     <div class="col-start-1 flex items-center gap-1.5 justify-self-start">
@@ -155,7 +155,7 @@ useResizeObserver(navRef, () => updateIndicator())
       >
         <NuxtLink
           to="/"
-          class="flex h-8 items-center rounded-md px-1.5 transition-opacity hover:opacity-90"
+          class="flex h-8 items-center rounded-md px-2 transition-opacity hover:opacity-90"
         >
           <BrandPostskinsLogo />
         </NuxtLink>
@@ -178,7 +178,7 @@ useResizeObserver(navRef, () => updateIndicator())
         :key="link.to"
         :ref="(el) => setLinkRef(link.to, el)"
         :to="link.to"
-        class="relative z-10 flex h-8 items-center rounded-md px-2.5 text-xs transition-colors duration-200"
+        class="relative z-10 flex h-8 items-center rounded-md px-3 text-sm transition-colors duration-200"
         :class="isNavActive(link.to)
           ? 'font-medium text-foreground'
           : 'text-foreground/55 hover:text-foreground/90'"
@@ -230,7 +230,7 @@ useResizeObserver(navRef, () => updateIndicator())
               >
                 <RiUser3Line class="size-3.5" />
               </span>
-              <span class="font-mono text-xs font-semibold tabular-nums text-foreground">
+              <span class="font-mono text-sm font-semibold tabular-nums text-foreground">
                 {{ balanceDisplay }}
               </span>
             </button>
@@ -263,11 +263,10 @@ useResizeObserver(navRef, () => updateIndicator())
     <button
       v-else
       type="button"
-      class="shine-btn shine-btn--sidebar group col-start-3 flex h-10 items-center justify-self-end gap-1.5 rounded-lg px-3.5 text-xs font-medium text-foreground"
-      :style="sectionSurfaceStyle"
+      class="shine-btn shine-btn--primary col-start-3 flex h-10 items-center justify-self-end gap-1.5 rounded-lg px-3.5 text-sm font-medium text-primary-foreground"
       @click="loginWithSteam()"
     >
-      <RiSteamFill class="relative z-10 size-4 transition-colors duration-300 group-hover:text-foreground" />
+      <RiSteamFill class="relative z-10 size-4" />
       <span class="relative z-10 hidden sm:inline">Sign in</span>
     </button>
   </header>
@@ -275,7 +274,9 @@ useResizeObserver(navRef, () => updateIndicator())
 
 <style scoped>
 .navbar-header {
-  padding-right: var(--scrollbar-width, 0px);
+  /* Base right padding (matches px-3) plus scrollbar compensation so the fixed
+     header's content edge lines up with the non-scrolled page content. */
+  padding-right: calc(3 * var(--spacing) + var(--scrollbar-width, 0px));
   border-bottom: 1px solid color-mix(
     in oklch,
     var(--border) calc(var(--header-border-alpha) * 100%),
@@ -288,6 +289,12 @@ useResizeObserver(navRef, () => updateIndicator())
   );
   -webkit-backdrop-filter: blur(var(--header-blur));
   backdrop-filter: blur(var(--header-blur));
+}
+
+@media (min-width: 640px) {
+  .navbar-header {
+    padding-right: calc(4 * var(--spacing) + var(--scrollbar-width, 0px));
+  }
 }
 
 .navbar-section {

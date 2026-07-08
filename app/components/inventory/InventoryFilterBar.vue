@@ -71,7 +71,7 @@ const filterSurfaceBg =
   '!bg-[color-mix(in_oklch,var(--sidebar-accent)_40%,var(--background))] dark:!bg-[color-mix(in_oklch,var(--sidebar-accent)_40%,var(--background))]'
 
 const filterControlClass =
-  `h-9 shrink-0 border-0 ${filterSurfaceBg} px-3 text-xs text-foreground !shadow-none transition-colors hover:!bg-[color-mix(in_oklch,var(--sidebar-accent)_55%,var(--background))] dark:hover:!bg-[color-mix(in_oklch,var(--sidebar-accent)_55%,var(--background))] focus-visible:border-primary/60 focus-visible:ring-0 data-[size=default]:h-9`
+  `h-9 shrink-0 border-0 ${filterSurfaceBg} px-3 text-sm text-foreground !shadow-none transition-colors hover:!bg-[color-mix(in_oklch,var(--sidebar-accent)_55%,var(--background))] dark:hover:!bg-[color-mix(in_oklch,var(--sidebar-accent)_55%,var(--background))] focus-visible:border-primary/60 focus-visible:ring-0 data-[size=default]:h-9`
 
 const filterMenuClass =
   `inventory-filter-menu w-(--reka-select-trigger-width) box-border px-2 py-1.5 text-xs text-foreground !shadow-none ring-0 backdrop-blur-none [backdrop-filter:none] [&_[data-reka-select-viewport]]:max-w-full [&_[data-reka-select-viewport]]:min-w-0 [&_[data-reka-select-viewport]]:p-0 [&_[data-reka-select-viewport]]:w-full ${filterSurfaceBg}`
@@ -137,7 +137,7 @@ function clearSheetFilters() {
         v-model="searchQuery"
         type="text"
         placeholder="Search items…"
-        class="h-9 w-full rounded-md bg-[color-mix(in_oklch,var(--sidebar-accent)_40%,var(--background))] pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/70 transition-colors focus:border-primary/60 focus:outline-none"
+        class="h-9 w-full rounded-md bg-[color-mix(in_oklch,var(--sidebar-accent)_40%,var(--background))] pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground/70 transition-colors focus:border-primary/60 focus:outline-none"
       >
     </div>
 
@@ -162,18 +162,13 @@ function clearSheetFilters() {
         <SheetTrigger as-child>
           <button
             type="button"
-            :class="[
-              'flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors',
-              activeFilterCount > 0
-                ? 'bg-primary/15 text-foreground hover:bg-primary/20'
-                : 'bg-[color-mix(in_oklch,var(--sidebar-accent)_40%,var(--background))] text-muted-foreground hover:border-border hover:text-foreground',
-            ]"
+            class="shine-btn shine-btn--primary flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-sm font-medium"
           >
-            <RiEqualizerLine class="size-4" />
-            <span class="hidden sm:inline">More filters</span>
+            <RiEqualizerLine class="relative z-10 size-4" />
+            <span class="relative z-10 hidden sm:inline">More filters</span>
             <span
               v-if="activeFilterCount > 0"
-              class="inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground"
+              class="relative z-10 inline-flex min-w-4 items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground"
             >
               {{ activeFilterCount }}
             </span>

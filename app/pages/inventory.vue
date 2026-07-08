@@ -18,7 +18,7 @@ watch(isAuthenticated, (authenticated, wasAuthenticated) => {
 </script>
 
 <template>
-  <div class="flex h-[calc(100svh-3.5rem)] w-full flex-col gap-3 overflow-hidden px-2 py-3 sm:px-3">
+  <div class="flex h-[calc(100svh-3.5rem)] w-full flex-col gap-3 overflow-hidden px-3 py-3 sm:px-4">
     <div v-if="!isAuthenticated" class="flex flex-1 items-center justify-center text-center">
       <div class="surface-panel flex max-w-sm flex-col items-center gap-4 rounded-lg px-6 py-8">
         <RiSteamFill class="size-10 text-muted-foreground" />
