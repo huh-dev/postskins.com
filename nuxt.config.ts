@@ -3,10 +3,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   css: ['~/assets/css/tailwind.css'],
   compatibilityDate: '2025-01-01',
+  routeRules: {
+    // The inventory now lives inside the sell flow.
+    '/inventory': { redirect: { to: '/sell', statusCode: 301 } },
+  },
   vite: {
     plugins: [tailwindcss()],
   },
-  modules: ['@nuxt/icon', 'shadcn-nuxt', 'nuxt-auth-sanctum'],
+  modules: ['@nuxt/icon', 'shadcn-nuxt', 'nuxt-auth-sanctum', '@nuxt/image'],
   sanctum: {
     // Laravel API base URL. Override with NUXT_PUBLIC_SANCTUM_BASE_URL in .env.
     baseUrl: 'http://localhost:8000',

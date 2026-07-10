@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { RiArchiveLine, RiArrowRightLine, RiFlaskLine, RiPriceTag3Line, RiStore2Line } from "@remixicon/vue"
+import { RiArrowRightLine, RiPriceTag3Line, RiShieldCheckLine, RiStore2Line } from "@remixicon/vue"
 
 const { user, isAuthenticated, loginWithSteam } = useAuth()
 
 const actions = [
-  { to: "/market", title: "Market", description: "Browse skins for sale and buy them P2P.", icon: RiStore2Line },
-  { to: "/sell", title: "Sell", description: "List a tradable item from your inventory.", icon: RiPriceTag3Line },
-  { to: "/inventory", title: "Inventory", description: "View your synced CS2 items.", icon: RiArchiveLine },
-  { to: "/trade-lab", title: "Trade lab", description: "Simulate the full trade lifecycle locally.", icon: RiFlaskLine },
+  { to: "/market", title: "Market", description: "Browse every skin listed by other players and buy it peer-to-peer.", icon: RiStore2Line },
+  { to: "/sell", title: "Sell", description: "Pick items from your Steam inventory and set your price.", icon: RiPriceTag3Line },
+  { to: "/support", title: "Support", description: "How the escrow and 7-day protection window keep a trade safe.", icon: RiShieldCheckLine },
 ]
 </script>
 
@@ -30,7 +29,7 @@ const actions = [
       </p>
     </section>
 
-    <section v-if="isAuthenticated" class="mt-10 grid gap-3 sm:grid-cols-2">
+    <section class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <NuxtLink
         v-for="action in actions"
         :key="action.to"

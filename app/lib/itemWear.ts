@@ -61,8 +61,12 @@ export function placeholderPattern(assetId: string): number {
   return (hashSeed(`${assetId}:pattern`) % 1000) + 1
 }
 
+/**
+ * Card-sized float. Twelve decimals do not fit the card and read as noise; the
+ * full precision stays available as a tooltip.
+ */
 export function formatWearFloat(value: number): string {
-  return value.toFixed(12)
+  return value.toFixed(4)
 }
 
 export function wearMarkerPercent(floatValue: number): number {

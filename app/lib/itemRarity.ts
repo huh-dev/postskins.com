@@ -124,14 +124,31 @@ export function itemRarityColor(type: string | null): string {
   return rgb === DEFAULT_GLOW ? 'oklch(0.55 0.01 106)' : `rgb(${rgb})`
 }
 
+/**
+ * Rarity haze behind an item. `closest-side` fades the gradient out before it
+ * reaches any edge of its box, so it reads as a soft haze rather than a disc
+ * cropped by the element bounds. The extra stops smooth the falloff, which a
+ * blur() filter used to do at the cost of a compositing layer.
+ */
 export function itemRarityGlowStyle(type: string | null): Record<string, string> {
   const rgb = itemRarityGlowRgb(type)
 
   return {
-    background: `radial-gradient(circle, rgb(${rgb} / 0.42) 0%, rgb(${rgb} / 0.16) 42%, transparent 72%)`,
+    background: [
+      `radial-gradient(ellipse closest-side`,
+      `rgb(${rgb} / 0.34) 0%`,
+      `rgb(${rgb} / 0.22) 28%`,
+      `rgb(${rgb} / 0.10) 52%`,
+      `rgb(${rgb} / 0.03) 74%`,
+      `transparent 100%)`,
+    ].join(', '),
   }
 }
 
+/**
+ * A single drop-shadow: each one is a full blur pass over the image, and the
+ * inventory grid paints hundreds of these at once.
+ */
 export function itemIconGlowFilter(type: string | null): string {
   const rgb = itemRarityGlowRgb(type)
 
@@ -139,11 +156,7 @@ export function itemIconGlowFilter(type: string | null): string {
     return 'drop-shadow(0 4px 14px oklch(0 0 0 / 0.3))'
   }
 
-  return [
-    `drop-shadow(0 0 10px rgb(${rgb} / 0.32))`,
-    `drop-shadow(0 0 22px rgb(${rgb} / 0.18))`,
-    `drop-shadow(0 6px 16px rgb(${rgb} / 0.12))`,
-  ].join(' ')
+  return `drop-shadow(0 2px 12px rgb(${rgb} / 0.4))`
 }
 
 export function itemIconDropShadow(type: string | null): string {

@@ -1,53 +1,31 @@
 <script setup lang="ts">
-import type { ComponentPublicInstance } from "vue"
-import { useResizeObserver, useTransition, useWindowScroll } from "@vueuse/core"
+import { useTransition, useWindowScroll } from "@vueuse/core"
 import {
   RiLogoutBoxRLine,
-  RiNotification3Line,
-  RiShoppingCart2Line,
   RiSteamFill,
   RiUser3Line,
 } from "@remixicon/vue"
-import { formatMoney } from "@/lib/format"
+import WalletMenu from "@/components/wallet/WalletMenu.vue"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
 const { user, isAuthenticated, loginWithSteam, logout } = useAuth()
-const { wallet, load: loadWallet } = useWallet()
+const { load: loadWallet } = useWallet()
 const route = useRoute()
 
 const navLinks = [
   { to: "/market", label: "Market" },
   { to: "/sell", label: "Sell" },
-  { to: "/inventory", label: "Inventory" },
-  { to: "/trade-lab", label: "Trade lab" },
+  { to: "/support", label: "Support" },
 ] as const
 
-const navRef = ref<HTMLElement | null>(null)
-const linkRefs = ref<Record<string, HTMLElement>>({})
-
-const indicator = reactive({
-  width: 0,
-  x: 0,
-  visible: false,
-})
-
 const isNavActive = (to: string) => route.path === to || route.path.startsWith(`${to}/`)
-
-const activeLink = computed(() =>
-  navLinks.find(link => isNavActive(link.to))?.to ?? null,
-)
-
-const indicatorStyle = computed(() => ({
-  width: `${indicator.width}px`,
-  transform: `translateX(${indicator.x}px)`,
-  opacity: indicator.visible ? 1 : 0,
-}))
 
 const { y: scrollY } = useWindowScroll()
 
@@ -68,7 +46,6 @@ const headerSurfaceStyle = computed(() => {
 
   return {
     "--header-blur": `${elevation * 16}px`,
-    "--header-bg-alpha": String(elevation * 0.42),
     "--header-border-alpha": String(elevation * 0.45),
   }
 })
@@ -90,45 +67,10 @@ const sectionSurfaceStyle = computed(() => {
   }
 })
 
-const balanceDisplay = computed(() =>
-  formatMoney(wallet.value?.balance, wallet.value?.currency ?? "USD"),
-)
-
-function setLinkRef(to: string, el: Element | ComponentPublicInstance | null) {
-  if (!el) {
-    delete linkRefs.value[to]
-    return
-  }
-
-  linkRefs.value[to] = el instanceof HTMLElement
-    ? el
-    : (el as ComponentPublicInstance).$el as HTMLElement
-}
-
-function updateIndicator() {
-  const target = activeLink.value
-  const nav = navRef.value
-  const link = target ? linkRefs.value[target] : null
-
-  if (!target || !nav || !link) {
-    indicator.visible = false
-    return
-  }
-
-  const navRect = nav.getBoundingClientRect()
-  const linkRect = link.getBoundingClientRect()
-
-  indicator.width = linkRect.width
-  indicator.x = linkRect.left - navRect.left
-  indicator.visible = true
-}
-
 onMounted(() => {
   if (isAuthenticated.value) {
     loadWallet()
   }
-
-  nextTick(updateIndicator)
 })
 
 watch(isAuthenticated, (authed) => {
@@ -137,179 +79,129 @@ watch(isAuthenticated, (authed) => {
   }
 })
 
-watch(activeLink, () => nextTick(updateIndicator))
-watch(() => route.path, () => nextTick(updateIndicator))
-
-useResizeObserver(navRef, () => updateIndicator())
 </script>
 
 <template>
   <header
-    class="navbar-header fixed inset-x-0 top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4"
+    class="bg-sidebar fixed inset-x-0 top-0 z-50 flex items-center px-3 py-2 sm:px-4"
     :style="headerSurfaceStyle"
   >
-    <div class="col-start-1 flex items-center gap-1.5 justify-self-start">
-      <div
-        class="navbar-section flex items-center gap-1 rounded-lg p-1"
-        :style="sectionSurfaceStyle"
-      >
-        <NuxtLink
-          to="/"
-          class="flex h-8 items-center rounded-md px-2 transition-opacity hover:opacity-90"
-        >
-          <BrandPostskinsLogo />
-        </NuxtLink>
-      </div>
-    </div>
+  
+  <!-- Logo -->
+  <div class="flex items-center gap-2">
+    <NuxtImg src="/skins/postskins_logo.png" alt="Logo" class="w-10 h-10 rounded-lg" />
+  </div>
 
-    <nav
-      ref="navRef"
-      class="navbar-section relative col-start-2 hidden items-center gap-0.5 justify-self-center rounded-lg p-1 md:flex"
-      :style="sectionSurfaceStyle"
+  <!-- Navigation Links -->
+  <nav class="ml-10 flex items-center gap-1">
+    <NuxtLink
+      v-for="link in navLinks"
+      :key="link.to"
+      :to="link.to"
+      class="relative flex items-center gap-2 px-2 py-1.5 text-sm font-medium transition-colors duration-200"
+      :class="isNavActive(link.to)
+        ? 'text-sidebar-foreground'
+        : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/65'"
     >
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute top-1 bottom-1 left-0 rounded-md bg-foreground/20 transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-        :style="indicatorStyle"
-      />
-
-      <NuxtLink
-        v-for="link in navLinks"
-        :key="link.to"
-        :ref="(el) => setLinkRef(link.to, el)"
-        :to="link.to"
-        class="relative z-10 flex h-8 items-center rounded-md px-3 text-sm transition-colors duration-200"
-        :class="isNavActive(link.to)
-          ? 'font-medium text-foreground'
-          : 'text-foreground/55 hover:text-foreground/90'"
-      >
+      <span class="relative">
         {{ link.label }}
-      </NuxtLink>
-    </nav>
+        <span
+          aria-hidden="true"
+          class="absolute inset-x-0 -bottom-1 h-px origin-right bg-primary transition-transform duration-300 ease-out"
+          :class="isNavActive(link.to) ? 'scale-x-100' : 'scale-x-0'"
+        />
+      </span>
+    </NuxtLink>
 
-    <div
-      v-if="isAuthenticated"
-      class="navbar-section col-start-3 flex items-center justify-self-end rounded-lg p-1"
-      :style="sectionSurfaceStyle"
-    >
-        <button
-          type="button"
-          class="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="Cart"
-        >
-          <RiShoppingCart2Line class="size-4" />
-        </button>
+  </nav>
 
-        <span class="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
+  <!-- Auth -->
+  <div class="ml-auto flex items-center gap-1">
+    <template v-if="isAuthenticated">
+      <WalletMenu />
 
-        <button
-          type="button"
-          class="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="Notifications"
-        >
-          <RiNotification3Line class="size-4" />
-        </button>
+      <span class="mx-1 h-4 w-px bg-sidebar-foreground/15" aria-hidden="true" />
 
-        <span class="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
-
-        <DropdownMenu :modal="false">
-          <DropdownMenuTrigger as-child>
-            <button
-              type="button"
-              class="flex h-8 items-center gap-2 rounded-md pl-1 pr-2.5 transition-colors hover:bg-accent"
+      <DropdownMenu :modal="false">
+        <DropdownMenuTrigger as-child>
+          <button
+            type="button"
+            class="flex items-center rounded-md p-1 transition-colors duration-200 hover:bg-accent"
+            :aria-label="`Account menu for ${user?.name ?? 'user'}`"
+          >
+            <img
+              v-if="user?.avatar"
+              :src="user.avatar"
+              :alt="user.name"
+              class="size-7 rounded-md object-cover ring-1 ring-sidebar-foreground/10"
             >
+            <span
+              v-else
+              class="flex size-7 items-center justify-center rounded-md bg-muted text-muted-foreground"
+            >
+              <RiUser3Line class="size-3.5" />
+            </span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="min-w-48">
+          <DropdownMenuLabel class="p-0 font-normal">
+            <div class="flex items-center gap-2.5 px-2 py-2">
               <img
                 v-if="user?.avatar"
                 :src="user.avatar"
                 :alt="user.name"
-                class="size-6 rounded-md object-cover"
+                class="size-8 rounded-md object-cover ring-1 ring-border"
               >
               <span
                 v-else
-                class="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground"
+                class="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground"
               >
-                <RiUser3Line class="size-3.5" />
+                <RiUser3Line class="size-4" />
               </span>
-              <span class="font-mono text-sm font-semibold tabular-nums text-foreground">
-                {{ balanceDisplay }}
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="min-w-44">
-            <DropdownMenuItem as-child>
-              <NuxtLink to="/inventory" class="w-full cursor-pointer">
-                Inventory
-              </NuxtLink>
-            </DropdownMenuItem>
-            <DropdownMenuItem as-child>
-              <NuxtLink to="/market" class="w-full cursor-pointer">
-                Market
-              </NuxtLink>
-            </DropdownMenuItem>
-            <DropdownMenuItem as-child>
-              <NuxtLink to="/sell" class="w-full cursor-pointer">
-                Sell
-              </NuxtLink>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem @select="logout()">
-              <RiLogoutBoxRLine />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-    </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium text-foreground">
+                  {{ user?.name }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                  Steam account
+                </p>
+              </div>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem as-child>
+            <NuxtLink to="/sell" class="w-full cursor-pointer">
+              Sell
+            </NuxtLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem as-child>
+            <NuxtLink to="/market" class="w-full cursor-pointer">
+              Market
+            </NuxtLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem as-child>
+            <NuxtLink to="/support" class="w-full cursor-pointer">
+              Support
+            </NuxtLink>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem @select="logout()">
+            <RiLogoutBoxRLine />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </template>
 
     <button
       v-else
       type="button"
-      class="shine-btn shine-btn--primary col-start-3 flex h-10 items-center justify-self-end gap-1.5 rounded-lg px-3.5 text-sm font-medium text-primary-foreground"
+      class="shine-btn shine-btn--primary flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-primary-foreground"
       @click="loginWithSteam()"
     >
       <RiSteamFill class="relative z-10 size-4" />
       <span class="relative z-10 hidden sm:inline">Sign in</span>
     </button>
+  </div>
   </header>
 </template>
-
-<style scoped>
-.navbar-header {
-  /* Base right padding (matches px-3) plus scrollbar compensation so the fixed
-     header's content edge lines up with the non-scrolled page content. */
-  padding-right: calc(3 * var(--spacing) + var(--scrollbar-width, 0px));
-  border-bottom: 1px solid color-mix(
-    in oklch,
-    var(--border) calc(var(--header-border-alpha) * 100%),
-    transparent
-  );
-  background-color: color-mix(
-    in oklch,
-    var(--background) calc(var(--header-bg-alpha) * 100%),
-    transparent
-  );
-  -webkit-backdrop-filter: blur(var(--header-blur));
-  backdrop-filter: blur(var(--header-blur));
-}
-
-@media (min-width: 640px) {
-  .navbar-header {
-    padding-right: calc(4 * var(--spacing) + var(--scrollbar-width, 0px));
-  }
-}
-
-.navbar-section {
-  border: 1px solid color-mix(
-    in oklch,
-    var(--border) calc(var(--section-border-alpha) * 100%),
-    transparent
-  );
-  background-color: color-mix(
-    in oklch,
-    var(--sidebar) calc(var(--section-bg-alpha) * 100%),
-    transparent
-  );
-  -webkit-backdrop-filter: blur(var(--section-blur));
-  backdrop-filter: blur(var(--section-blur));
-  box-shadow: 0 var(--section-shadow-y) var(--section-shadow-blur) oklch(0 0 0 / var(--section-shadow-alpha));
-}
-</style>
