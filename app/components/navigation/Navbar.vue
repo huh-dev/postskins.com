@@ -170,6 +170,11 @@ watch(isAuthenticated, (authed) => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem as-child>
+            <NuxtLink to="/account" class="w-full cursor-pointer">
+              Account
+            </NuxtLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem as-child>
             <NuxtLink to="/sell" class="w-full cursor-pointer">
               Sell
             </NuxtLink>

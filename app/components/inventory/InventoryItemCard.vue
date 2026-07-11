@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RiLock2Line, RiPriceTag3Line, RiSearchLine } from '@remixicon/vue'
+import { RiCheckLine, RiLock2Line, RiSearchLine } from '@remixicon/vue'
 import {
   type InventoryItemStack,
   stackHasTradableItem,
@@ -16,13 +16,13 @@ import {
   wearMarkerPercent,
 } from '@/lib/itemWear'
 
-const { stack, listed = false } = defineProps<{
+const { stack, selected = false } = defineProps<{
   stack: InventoryItemStack
-  /** The item already has an active listing, so selling is not offered again. */
-  listed?: boolean
+  /** The item is part of the current offer selection. */
+  selected?: boolean
 }>()
 
-const emit = defineEmits<{ sell: [stack: InventoryItemStack] }>()
+const emit = defineEmits<{ toggle: [stack: InventoryItemStack] }>()
 
 const lockLabel = computed(() => stackTradeLockLabel(stack))
 const lockTitle = computed(() => stackTradeLockTitle(stack))
@@ -43,41 +43,65 @@ const iconGlowFilter = computed(() => itemIconGlowFilter(stack.item.type))
 const wearMarkerStyle = computed(() => ({
   left: `${wearMarkerPercent(floatValue.value ?? 0)}%`,
 }))
+
+function toggle(): void {
+  if (isTradable.value) {
+    emit('toggle', stack)
+  }
+}
 </script>
 
 <template>
   <article
-    class="item-card relative flex h-full flex-col overflow-hidden rounded-lg"
-    :class="{ 'opacity-70': !isTradable }"
+    class="item-card relative flex h-full flex-col rounded-lg text-left transition-colors"
+    :class="[
+      { 'opacity-75': !isTradable, 'cursor-pointer': isTradable },
+      selected ? 'is-selected' : '',
+    ]"
+    role="button"
+    :aria-pressed="selected"
+    :aria-disabled="!isTradable"
+    :tabindex="isTradable ? 0 : -1"
+    @click="toggle"
+    @keydown.enter.prevent="toggle"
+    @keydown.space.prevent="toggle"
   >
-    <header class="relative px-2.5 pt-2 pb-1">
-      <span
-        v-if="stack.count > 1"
-        class="absolute top-1.5 right-2 rounded bg-sidebar-accent/90 px-1 py-px text-[0.625rem] font-semibold tabular-nums text-muted-foreground"
-      >
-        ×{{ stack.count }}
-      </span>
+    <span
+      v-if="selected"
+      class="absolute right-2 top-2 z-20 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+      aria-hidden="true"
+    >
+      <RiCheckLine class="size-3" />
+    </span>
 
-      <p class="truncate pr-6 text-[0.6875rem] font-semibold leading-tight text-foreground" :title="displayName">
+    <header class="relative px-3 pt-2.5 pb-1">
+      <p class="truncate pr-6 text-xs font-semibold leading-tight text-foreground" :title="displayName">
         {{ displayName }}
       </p>
-      <p class="mt-px truncate text-[0.625rem] leading-tight text-muted-foreground">
-        {{ wearTier ?? stack.item.type ?? ' ' }}
+      <p v-if="wearTier" class="mt-0.5 truncate text-[0.6875rem] text-muted-foreground">
+        {{ wearTier }}
       </p>
     </header>
 
-    <div class="relative mx-2.5 flex aspect-[4/3] items-center justify-center overflow-visible">
-      <!-- Fills the frame: the gradient fades out on its own, so nothing crops it. -->
+    <div class="relative mx-3 flex aspect-[4/3] items-center justify-center overflow-visible">
+      <!-- Soft, contained rarity haze behind the icon (not a full-card wash). -->
       <div
-        class="pointer-events-none absolute inset-0"
+        class="pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[72%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[26px]"
         :style="rarityGlowStyle"
         aria-hidden="true"
       />
 
       <span
+        v-if="stack.count > 1"
+        class="absolute right-1 top-1 z-10 rounded-md bg-sidebar-accent/90 px-1.5 py-0.5 text-[0.625rem] font-semibold tabular-nums text-foreground"
+      >
+        ×{{ stack.count }}
+      </span>
+
+      <span
         v-if="lockLabel"
         :title="lockTitle ?? undefined"
-        class="absolute left-0 top-0 z-10 inline-flex items-center gap-1 rounded border border-border/60 bg-sidebar-accent px-1 py-px text-[0.625rem] font-medium text-amber-500"
+        class="absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-md border border-border/60 bg-sidebar-accent/90 px-1.5 py-0.5 text-[0.625rem] font-medium text-amber-500 backdrop-blur-sm"
       >
         <RiLock2Line class="size-2.5" />
         {{ lockLabel }}
@@ -88,54 +112,35 @@ const wearMarkerStyle = computed(() => ({
         :src="stack.item.icon_url"
         :alt="displayName"
         loading="lazy"
-        class="relative z-[1] max-h-[86%] max-w-[92%] object-contain"
+        class="relative z-[1] max-h-[78%] max-w-[88%] object-contain"
         :style="{ filter: iconGlowFilter }"
       >
-      <div v-else class="relative z-[1] text-[0.625rem] text-muted-foreground">No image</div>
+      <div v-else class="relative z-[1] text-xs text-muted-foreground">No image</div>
 
       <button
         type="button"
-        class="absolute right-0 bottom-0 z-10 flex size-5 items-center justify-center rounded-full border border-border/50 bg-sidebar-accent text-muted-foreground"
+        class="absolute right-1.5 bottom-1.5 z-10 flex size-6 items-center justify-center rounded-full border border-border/50 bg-sidebar-accent/80 text-muted-foreground backdrop-blur-sm"
         aria-label="Inspect item"
         tabindex="-1"
       >
-        <RiSearchLine class="size-2.5" />
+        <RiSearchLine class="size-3" />
       </button>
     </div>
 
-    <div v-if="wearTier && floatValue !== null" class="space-y-1 px-2.5 pt-1.5">
-      <div class="relative h-0.5 rounded-full bg-[linear-gradient(to_right,#22c55e_0%,#22c55e_7%,#a3e635_15%,#fbbf24_38%,#f97316_45%,#ef4444_100%)]">
+    <div v-if="wearTier && floatValue !== null" class="space-y-1.5 px-3 pt-2 pb-2.5">
+      <div class="relative h-1 overflow-visible rounded-full bg-[linear-gradient(to_right,#22c55e_0%,#22c55e_7%,#a3e635_15%,#fbbf24_38%,#f97316_45%,#ef4444_100%)]">
         <span
-          class="absolute top-1/2 h-2 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_4px_oklch(1_0_0/0.6)]"
+          class="absolute top-1/2 h-2.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_4px_oklch(1_0_0/0.6)]"
           :style="wearMarkerStyle"
         />
       </div>
 
-      <div class="flex items-center justify-between gap-1.5 text-[0.625rem] tabular-nums text-muted-foreground">
+      <div class="flex items-center justify-between gap-2 text-[0.625rem] tabular-nums text-muted-foreground">
         <span class="truncate" :title="floatValue.toFixed(12)">{{ formatWearFloat(floatValue) }}</span>
         <span class="shrink-0">#{{ patternIndex }}</span>
       </div>
     </div>
-
-    <div class="mt-auto px-2.5 pt-1.5 pb-2">
-      <div
-        v-if="listed"
-        class="flex h-6 w-full items-center justify-center gap-1 rounded-md bg-sidebar-accent/70 text-[0.625rem] font-medium text-muted-foreground"
-      >
-        <RiPriceTag3Line class="size-3" />
-        Listed
-      </div>
-      <button
-        v-else
-        type="button"
-        class="shine-btn shine-btn--primary flex h-6 w-full items-center justify-center gap-1 rounded-md text-[0.625rem] font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        :disabled="!isTradable"
-        @click="emit('sell', stack)"
-      >
-        <Icon name="solar:tag-price-bold" class="relative z-10 size-3" />
-        <span class="relative z-10">Sell</span>
-      </button>
-    </div>
+    <div v-else class="pb-2.5" />
   </article>
 </template>
 
@@ -154,5 +159,11 @@ const wearMarkerStyle = computed(() => ({
   */
   content-visibility: auto;
   contain-intrinsic-size: auto 320px;
+}
+
+.item-card.is-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+  background-color: color-mix(in oklch, var(--primary) 10%, var(--sidebar));
 }
 </style>

@@ -22,25 +22,40 @@ export interface TradePartyDto {
   suspended: boolean
 }
 
-export interface TradeItemDto {
+export interface ItemThumbDto {
   name: string | null
   market_hash_name: string | null
+  type?: string | null
   icon_url: string | null
+}
+
+export interface TradeItemLegDto {
+  id: number
+  side: "from_initiator" | "from_counterparty"
+  giver_id: number
+  receiver_id: number
+  market_hash_name: string
+  asset_id_sent: string
+  asset_id_received: string | null
+  received_at: string | null
+  item: ItemThumbDto
 }
 
 export interface TradeDto {
   id: number
   status: TradeStatus
-  price: number
-  currency: string
   app_id: number
   context_id: number
-  market_hash_name: string
-  item: TradeItemDto
-  seller: TradePartyDto | null
-  buyer: TradePartyDto | null
+  cash_amount: number
+  cash_payer_id: number | null
+  cash_payee_id: number | null
+  currency: string
+  initiator: TradePartyDto | null
+  counterparty: TradePartyDto | null
+  items: TradeItemLegDto[]
   steam_trade_link?: string | null
   escrow: boolean
+  needs_review: boolean
   protection_expires_at: string | null
   accepted_at: string | null
   completed_at: string | null
@@ -54,8 +69,8 @@ interface TradeResponse {
 }
 
 /**
- * Loads and tracks a single P2P trade from the Laravel API. The consumer polls
- * `load()` while the trade is active to watch it move through delivery →
+ * Loads and tracks a single executed trade from the Laravel API. The consumer
+ * polls `load()` while the trade is active to watch it move through delivery →
  * protection window → completion (or reversal).
  */
 export function useTrade(id: MaybeRefOrGetter<number | string>) {
@@ -91,15 +106,26 @@ export function useTrade(id: MaybeRefOrGetter<number | string>) {
 }
 
 /**
+ * The legs the given user gives away in a trade.
+ */
+export function legsGivenBy(trade: TradeDto, userId: number | undefined): TradeItemLegDto[] {
+  return trade.items.filter(leg => leg.giver_id === userId)
+}
+
+/**
  * Human label for a trade event type shown in the timeline.
  */
 export function tradeEventLabel(type: string): string {
   const labels: Record<string, string> = {
     created: "Trade created · funds held",
-    accepted: "Item received · payout locked",
-    completed: "Protection window passed · seller paid",
-    reversal: "Reversal detected · seller suspended",
-    cancelled: "Not delivered · buyer refunded",
+    offer_sent: "Steam offer sent",
+    awaiting_confirmation: "Awaiting mobile confirmation",
+    offer_send_failed: "Could not send the Steam offer",
+    accepted: "Items received · payout locked",
+    completed: "Protection window passed · paid out",
+    reversal: "Reversal detected",
+    reversal_review: "Reversal · flagged for manual review",
+    cancelled: "Not delivered · refunded",
     disputed: "Wrong item · under review",
   }
 

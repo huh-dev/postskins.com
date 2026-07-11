@@ -207,11 +207,11 @@ onUnmounted(() => {
       <template v-if="trade">
         <div class="mt-3 flex items-center gap-3 rounded-md border border-border bg-background/50 p-3">
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium">{{ trade.item.name }}</p>
-            <p class="truncate text-xs text-muted-foreground">{{ trade.market_hash_name }}</p>
+            <p class="truncate text-sm font-medium">{{ trade.items[0]?.item.name ?? "Item" }}</p>
+            <p class="truncate text-xs text-muted-foreground">{{ trade.items[0]?.market_hash_name }}</p>
           </div>
           <span class="shrink-0 font-mono text-sm font-semibold tabular-nums">
-            {{ formatMoney(trade.price, trade.currency) }}
+            {{ formatMoney(trade.cash_amount, trade.currency) }}
           </span>
         </div>
 
